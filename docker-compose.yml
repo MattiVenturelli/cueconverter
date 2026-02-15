@@ -1,0 +1,7 @@
+services:
+  cueconverter:
+    build: .
+    container_name: cueconverter
+    volumes:
+      - /home/matti/Downloads:/watch
+    restart: unless-stopped
