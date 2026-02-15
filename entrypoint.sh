@@ -82,21 +82,20 @@ process_cue() {
     log "Splitting: $flac_file using $cue_file"
 
     # Split the flac file into individual tracks
-    if ! shnsplit -f "$cue_file" -t "%n - %t" -o flac -d "$dir" "$flac_file"; then
+    if ! shnsplit -f "$cue_file" -t "%n - %t" -o flac -O always -d "$dir" "$flac_file"; then
         log "ERROR: shnsplit failed for $cue_file"
         return 1
     fi
 
-    # Apply metadata from cue sheet to split tracks
-    local split_tracks
-    split_tracks=$(find "$dir" -maxdepth 1 -name '[0-9][0-9] - *.flac' -type f | sort)
+    # Remove pregap track before tagging (would shift metadata off by one)
+    rm -f "$dir/00 - pregap.flac"
 
-    if [[ -z "$split_tracks" ]]; then
-        log "ERROR: No split tracks found after shnsplit"
-        return 1
-    fi
+    # Apply metadata from cue sheet to split tracks (use relative paths to avoid
+    # cuetag.sh eval issues with special characters like parentheses in paths)
+    local cue_basename
+    cue_basename="$(basename "$cue_file")"
 
-    if ! cuetag.sh "$cue_file" $split_tracks; then
+    if ! (cd "$dir" && cuetag.sh "$cue_basename" [0-9][0-9]\ -\ *.flac); then
         log "WARNING: cuetag failed, tracks were split but may lack metadata"
     fi
 
@@ -107,8 +106,6 @@ process_cue() {
     log "Removing original files"
     rm -f "$flac_file" "$dir/$MARKER"
     find "$dir" -maxdepth 1 -name '*.cue' -type f -exec sh -c 'echo "$1" >> "'"$PROCESSED_LIST"'"' _ {} \; -delete
-    # Remove pregap track if present
-    rm -f "$dir/00 - pregap.flac"
 
     log "Done processing: $cue_file"
 }
