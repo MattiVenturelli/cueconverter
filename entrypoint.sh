@@ -2,9 +2,10 @@
 set -euo pipefail
 
 POLL_INTERVAL="${POLL_INTERVAL:-30}"
-STABLE_SECS="${STABLE_SECS:-60}"
+MARKER="${MARKER:-.complete}"
 PROCESSED_LIST="/tmp/processed_cues"
-touch "$PROCESSED_LIST"
+FAILED_LIST="/tmp/failed_cues"
+touch "$PROCESSED_LIST" "$FAILED_LIST"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
@@ -19,6 +20,11 @@ process_cue() {
     if ! grep -q '^FILE.*\.flac' "$cue_file"; then
         log "Skipping $cue_file (does not reference a .flac file)"
         echo "$cue_file" >> "$PROCESSED_LIST"
+        return 0
+    fi
+
+    # Skip if download is not complete (no marker file)
+    if [ ! -f "$dir/$MARKER" ]; then
         return 0
     fi
 
@@ -65,21 +71,13 @@ process_cue() {
         return 1
     fi
 
-    # Skip if files were modified recently (likely still downloading)
-    local now
-    now=$(date +%s)
-    local cue_mtime flac_mtime
-    cue_mtime=$(stat -c %Y "$cue_file")
-    flac_mtime=$(stat -c %Y "$flac_file")
-    local cue_age=$(( now - cue_mtime ))
-    local flac_age=$(( now - flac_mtime ))
-
-    if [[ "$cue_age" -lt "$STABLE_SECS" || "$flac_age" -lt "$STABLE_SECS" ]]; then
-        log "Waiting: $cue_file (files modified ${cue_age}s/${flac_age}s ago, need ${STABLE_SECS}s)"
-        return 0
+    # Verify FLAC integrity before splitting
+    log "Verifying: $flac_file"
+    if ! flac --test --silent "$flac_file" 2>/dev/null; then
+        log "ERROR: FLAC integrity check failed for $flac_file (corrupt or incomplete)"
+        echo "$cue_file" >> "$FAILED_LIST"
+        return 1
     fi
-
-    log "Processing: $cue_file"
 
     log "Splitting: $flac_file using $cue_file"
 
@@ -107,7 +105,7 @@ process_cue() {
 
     # Remove original files and other cue/log files
     log "Removing original files"
-    rm -f "$flac_file"
+    rm -f "$flac_file" "$dir/$MARKER"
     find "$dir" -maxdepth 1 -name '*.cue' -type f -exec sh -c 'echo "$1" >> "'"$PROCESSED_LIST"'"' _ {} \; -delete
     # Remove pregap track if present
     rm -f "$dir/00 - pregap.flac"
@@ -115,12 +113,12 @@ process_cue() {
     log "Done processing: $cue_file"
 }
 
-log "Starting cueconverter - polling /watch every ${POLL_INTERVAL}s (stable after ${STABLE_SECS}s)"
+log "Starting cueconverter - polling /watch every ${POLL_INTERVAL}s (marker: $MARKER)"
 
 while true; do
     find /watch -name '*.cue' -type f | while read -r cue_file; do
         # Skip already processed files
-        if grep -qFx "$cue_file" "$PROCESSED_LIST" 2>/dev/null; then
+        if grep -qFx "$cue_file" "$PROCESSED_LIST" "$FAILED_LIST" 2>/dev/null; then
             continue
         fi
         process_cue "$cue_file" || true

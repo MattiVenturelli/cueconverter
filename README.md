@@ -5,10 +5,11 @@ Docker container that monitors a folder and automatically splits `.cue` + `.flac
 ## How it works
 
 1. Polls the watched folder every 30 seconds for `.cue` files
-2. Waits until both `.cue` and `.flac` haven't been modified for 60 seconds (to avoid processing incomplete downloads)
-3. Splits the single `.flac` into individual tracks using `shnsplit`
-4. Applies metadata (artist, title, track number) from the cue sheet using `cuetag`
-5. Removes the original `.cue` and single `.flac`, keeping only the split tracks
+2. Only processes directories containing a `.complete` marker file (created by your torrent client when the download finishes)
+3. Verifies FLAC integrity before splitting
+4. Splits the single `.flac` into individual tracks using `shnsplit`
+5. Applies metadata (artist, title, track number) from the cue sheet using `cuetag`
+6. Removes the original `.cue`, single `.flac`, and `.complete` marker
 
 ## Usage
 
@@ -23,6 +24,16 @@ volumes:
   - /path/to/your/downloads:/watch
 ```
 
+### qBittorrent setup
+
+In **Settings → Downloads → Run external program → Run on torrent finished**:
+
+```
+touch "%F/.complete"
+```
+
+This creates a `.complete` marker file when a torrent finishes downloading. The container will only process directories that contain this marker.
+
 ## Configuration
 
 Environment variables:
@@ -30,14 +41,14 @@ Environment variables:
 | Variable | Default | Description |
 |---|---|---|
 | `POLL_INTERVAL` | `30` | Seconds between each scan |
-| `STABLE_SECS` | `60` | Seconds a file must be unmodified before processing |
+| `MARKER` | `.complete` | Marker filename to look for |
 
 Example with custom values:
 
 ```yaml
 environment:
   - POLL_INTERVAL=15
-  - STABLE_SECS=120
+  - MARKER=.done
 ```
 
 ## FLAC matching
