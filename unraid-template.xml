@@ -7,7 +7,7 @@
     <Tag>latest</Tag>
     <TagDescription>Latest stable release</TagDescription>
   </Branch>
-  <Icon>https://raw.githubusercontent.com/MattiVenturelli/cueconverter/main/icon.svg</Icon>
+  <Icon>https://raw.githubusercontent.com/MattiVenturelli/cueconverter/main/icon.png</Icon>
   <Network>none</Network>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
