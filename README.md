@@ -11,18 +11,30 @@ Docker container that monitors a folder and automatically splits `.cue` + `.flac
 5. Applies metadata (artist, title, track number) from the cue sheet using `cuetag`
 6. Removes the original `.cue`, single `.flac`, and `.complete` marker
 
-## Usage
+## Quick start
+
+```bash
+docker run -d --name cueconverter --restart unless-stopped \
+  -v /path/to/your/downloads:/watch \
+  ghcr.io/mattiventurelli/cueconverter:latest
+```
+
+Or with docker compose:
 
 ```bash
 docker compose up -d
 ```
 
-Edit `docker-compose.yml` to point the volume to your downloads folder:
+### Unraid
 
-```yaml
-volumes:
-  - /path/to/your/downloads:/watch
-```
+Add a new container from the Docker UI:
+
+| Field | Value |
+|---|---|
+| Repository | `ghcr.io/mattiventurelli/cueconverter:latest` |
+| Volume | `/mnt/user/downloads` → `/watch` |
+| Environment | `POLL_INTERVAL` = `30` |
+| Environment | `MARKER` = `.complete` |
 
 ### qBittorrent setup
 
@@ -61,7 +73,7 @@ The container finds the associated `.flac` file in this order:
 
 Cue sheets that don't reference a `.flac` source (e.g. `.wav` cue sheets) are skipped automatically.
 
-## Build
+## Build from source
 
 ```bash
 docker build -t cueconverter .
