@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>cueconverter</Name>
+  <Repository>ghcr.io/mattiventurelli/cueconverter:latest</Repository>
+  <Registry>https://github.com/MattiVenturelli/cueconverter/pkgs/container/cueconverter</Registry>
+  <Branch>
+    <Tag>latest</Tag>
+    <TagDescription>Latest stable release</TagDescription>
+  </Branch>
+  <Network>none</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/MattiVenturelli/cueconverter/issues</Support>
+  <Project>https://github.com/MattiVenturelli/cueconverter</Project>
+  <Overview>Monitors a folder and automatically splits .cue + .flac albums into individual tagged FLAC tracks. Requires qBittorrent configured with: touch "%F/.complete" in Run on torrent finished.</Overview>
+  <Category>MediaApp:Music</Category>
+  <Description>Monitors a folder and automatically splits .cue + .flac albums into individual tagged FLAC tracks. Requires qBittorrent configured with: touch "%F/.complete" in Run on torrent finished.</Description>
+  <Config Name="Downloads Path" Target="/watch" Default="/mnt/user/downloads" Mode="rw" Description="Path to the folder to monitor for .cue+.flac albums" Type="Path" Display="always" Required="true">/mnt/user/downloads</Config>
+  <Config Name="Poll Interval" Target="POLL_INTERVAL" Default="30" Description="Seconds between each scan for new .cue files" Type="Variable" Display="always" Required="false">30</Config>
+  <Config Name="Marker Filename" Target="MARKER" Default=".complete" Description="Filename that signals a download is complete" Type="Variable" Display="always" Required="false">.complete</Config>
+</Container>

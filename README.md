@@ -27,14 +27,12 @@ docker compose up -d
 
 ### Unraid
 
-Add a new container from the Docker UI:
-
-| Field | Value |
-|---|---|
-| Repository | `ghcr.io/mattiventurelli/cueconverter:latest` |
-| Volume | `/mnt/user/downloads` → `/watch` |
-| Environment | `POLL_INTERVAL` = `30` |
-| Environment | `MARKER` = `.complete` |
+1. Go to **Docker → Template Repositories** and add:
+   ```
+   https://github.com/MattiVenturelli/cueconverter
+   ```
+2. Click **Add Container**, select **cueconverter** from the template list
+3. Set your downloads path and click **Apply**
 
 ### qBittorrent setup
 
